@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>LTV Margin Calculator</title>
+
+<style>
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #141E30, #243B55);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.container {
+  background: #ffffff;
+  padding: 30px;
+  border-radius: 16px;
+  width: 400px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+  position: relative;
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #243B55;
+}
+
+input {
+  width: 100%;
+  padding: 10px;
+  margin: 6px 0 14px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+}
+
+.scheme-box {
+  display: flex;
+  gap: 12px;
+}
+
+.scheme-box input {
+  width: 50%;
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 8px;
+  border-radius: 8px;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.calc-btn {
+  background: linear-gradient(135deg, #1D976C, #2C3E50);
+  color: white;
+}
+
+.reset-btn {
+  background: #888;
+  color: white;
+}
+
+.result-section {
+  margin-top: 18px;
+}
+
+.popup {
+  padding: 10px 15px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.green-popup {
+  background: #d4edda;
+  color: #155724;
+}
+
+.orange-popup {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.loan-highlight {
+  background: linear-gradient(135deg, #1D976C, #2C3E50);
+  color: white;
+  padding: 18px;
+  border-radius: 12px;
+  text-align: center;
+  font-size: 22px;
+  font-weight: bold;
+  margin-bottom: 15px;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.2);
+}
+
+.sub-result {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.sub-result strong {
+  color: #243B55;
+}
+
+.footer {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 12px;
+  color: #777;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>LTV Margin Calculator</h2>
+
+<label>Invoice Amount</label>
+<input type="text"
+       id="invoice"
+       placeholder="Enter Invoice Amount"
+       inputmode="numeric"
+       pattern="[0-9,]*"
+       oninput="formatNumber(this)">
+
+<label>Allowed LTV (%)</label>
+<input type="number" id="ltv" placeholder="Enter LTV %">
+
+<label>Scheme</label>
+<div class="scheme-box">
+  <input type="number" id="totalMonths" placeholder="Total Months">
+  <input type="number" id="advanceMonths" placeholder="Advance Months">
+</div>
+
+<button class="calc-btn" onclick="calculate()">Calculate</button>
+<button class="reset-btn" onclick="resetForm()">Reset</button>
+
+<div id="output" class="result-section"></div>
+
+<div class="footer">
+  Powered by Durga Shankar
+</div>
+
+</div>
+
+<script>
+
+function formatNumber(input) {
+  let value = input.value.replace(/,/g, '');
+  if (!isNaN(value) && value !== "") {
+    input.value = Number(value).toLocaleString('en-IN');
+  }
+}
+
+function calculate() {
+
+  let invoiceRaw = document.getElementById("invoice").value.replace(/,/g, '');
+  let invoice = parseFloat(invoiceRaw);
+  let ltv = parseFloat(document.getElementById("ltv").value);
+  let totalMonths = parseFloat(document.getElementById("totalMonths").value);
+  let advanceMonths = parseFloat(document.getElementById("advanceMonths").value);
+
+  if (!invoice || !ltv || !totalMonths || advanceMonths === "" || advanceMonths >= totalMonths) {
+    document.getElementById("output").innerHTML = "Please enter valid details.";
+    return;
+  }
+
+  let netTenure = totalMonths - advanceMonths;
+  let financeAmount = invoice * (ltv / 100);
+  let emi = financeAmount / netTenure;
+  let calculatedLoan = emi * totalMonths;
+
+  let finalLoan = calculatedLoan > invoice ? invoice : calculatedLoan;
+
+  let effectiveFinance = (finalLoan * netTenure) / totalMonths;
+  let effectiveLTV = (effectiveFinance / invoice) * 100;
+
+  let popupHTML = "";
+
+  if (Math.abs(finalLoan - invoice) < 0.01) {
+      if (Math.abs(effectiveLTV - ltv) < 0.01) {
+        popupHTML = `<div class="popup green-popup">
+        This scheme perfectly matches allowed LTV.
+        </div>`;
+      } else {
+        popupHTML = `<div class="popup orange-popup">
+        You can increase scheme to utilize maximum finance. Or you can use it
+        </div>`;
+      }
+  }
+
+  document.getElementById("output").innerHTML = `
+    ${popupHTML}
+
+    <div class="loan-highlight">
+      ₹ ${Number(finalLoan).toLocaleString('en-IN')}
+      <div style="font-size:13px;font-weight:normal;margin-top:5px;">
+      System Loan Amount
+      </div>
+    </div>
+
+    <div class="sub-result">
+      <strong>Effective Finance:</strong> ₹ ${Number(effectiveFinance).toLocaleString('en-IN')}<br>
+      <strong>EMI:</strong> ₹ ${Number(emi).toLocaleString('en-IN')}<br>
+      <strong>Effective LTV:</strong> ${effectiveLTV.toFixed(2)} %
+    </div>
+  `;
+}
+
+function resetForm() {
+  document.getElementById("invoice").value = "";
+  document.getElementById("ltv").value = "";
+  document.getElementById("totalMonths").value = "";
+  document.getElementById("advanceMonths").value = "";
+  document.getElementById("output").innerHTML = "";
+}
+
+</script>
+
+</body>
+</html>
