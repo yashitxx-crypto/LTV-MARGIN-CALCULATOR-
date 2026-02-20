@@ -178,12 +178,15 @@ function calculate() {
 
   let netTenure = totalMonths - advanceMonths;
   let financeAmount = invoice * (ltv / 100);
-  let emi = financeAmount / netTenure;
-  let calculatedLoan = emi * totalMonths;
+  let calculatedLoan = (financeAmount / netTenure) * totalMonths;
 
   let finalLoan = calculatedLoan > invoice ? invoice : calculatedLoan;
 
   let effectiveFinance = (finalLoan * netTenure) / totalMonths;
+
+  // ✅ EMI fixed: use effectiveFinance / netTenure
+  let emi = effectiveFinance / netTenure;
+
   let effectiveLTV = (effectiveFinance / invoice) * 100;
 
   let popupHTML = "";
